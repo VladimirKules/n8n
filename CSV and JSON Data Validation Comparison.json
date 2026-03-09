@@ -1,0 +1,294 @@
+{
+  "name": "CSV and JSON Data Validation Comparison",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "3ef8705c-258b-4508-aabb-58c396e4f4f9",
+      "name": "Start Comparison",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        256,
+        1712
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "1d28pTfnXI3C3Pgr_KM3p8LW8UQA6d9uY",
+          "mode": "list",
+          "cachedResultName": "calendar.csv",
+          "cachedResultUrl": "https://drive.google.com/file/d/1d28pTfnXI3C3Pgr_KM3p8LW8UQA6d9uY/view?usp=drivesdk"
+        },
+        "options": {}
+      },
+      "id": "d713221f-614e-48fb-b017-4dde1d60caaa",
+      "name": "Load CSV File",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        448,
+        1616
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "1TEkoLF1xdQ8Cw2yBx0ZdT_Zl8r0i87TI",
+          "mode": "list",
+          "cachedResultName": "calendar2.json",
+          "cachedResultUrl": "https://drive.google.com/file/d/1TEkoLF1xdQ8Cw2yBx0ZdT_Zl8r0i87TI/view?usp=drivesdk"
+        },
+        "options": {}
+      },
+      "id": "e0d5137a-e6ac-4509-be7b-b07d96423203",
+      "name": "Load JSON File",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        448,
+        1792
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "16dd419d-b250-4d94-b4a3-6037ff59a3f1",
+      "name": "Parse CSV",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        608,
+        1616
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "fromJson",
+        "options": {}
+      },
+      "id": "c8360a22-0f74-4866-8ba7-095fe3c1482a",
+      "name": "Parse JSON",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        608,
+        1792
+      ]
+    },
+    {
+      "parameters": {
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "data",
+              "field2": "data"
+            }
+          ]
+        },
+        "fuzzyCompare": true,
+        "options": {}
+      },
+      "id": "e3d66608-f3ec-4a9f-bd75-a70c735a633f",
+      "name": "Compare Data",
+      "type": "n8n-nodes-base.compareDatasets",
+      "typeVersion": 2.3,
+      "position": [
+        928,
+        1680
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={}",
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        752,
+        1792
+      ],
+      "id": "65d8db0e-5ec3-445e-a7f1-a76d18bcb9c9",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Получаем данные из предыдущего узла\nconst items = $input.all();\n\n// Обрабатываем каждый элемент\nconst processedItems = items.map(item => {\n  // Создаем объект data верхнего уровня\n  const result = {\n    data: {\n      year: parseInt(item.json[\"Год/Месяц\"]),\n      months: [],\n      statistic: {}\n    }\n  };\n\n  // Массив месяцев с русскими названиями для маппинга\n  const monthNames = [\n    \"Январь\", \"Февраль\", \"Март\", \"Апрель\", \"Май\", \"Июнь\",\n    \"Июль\", \"Август\", \"Сентябрь\", \"Октябрь\", \"Ноябрь\", \"Декабрь\"\n  ];\n  \n  // Обрабатываем каждый месяц\n  result.data.months = monthNames.map((monthName, index) => {\n    // Получаем строку дней для текущего месяца\n    const daysString = item.json[monthName] || \"\";\n    \n    return {\n      month: index + 1,\n      days: daysString\n    };\n  });\n  \n  // Статистика\n  result.data.statistic = {\n    workdays: parseInt(item.json[\"Всего рабочих дней\"]),\n    holidays: parseInt(item.json[\"Всего праздничных и выходных дней\"]),\n    hours40: parseFloat(item.json[\"Количество рабочих часов при 40-часовой рабочей неделе\"]),\n    hours36: parseFloat(item.json[\"Количество рабочих часов при 36-часовой рабочей неделе\"]),\n    hours24: parseFloat(item.json[\"Количество рабочих часов при 24-часовой рабочей неделе\"])\n  };\n  \n  return result;\n});\n\nreturn processedItems;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        752,
+        1616
+      ],
+      "id": "a42a7bf7-187a-495d-af41-6fb1ad8ec24b",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "html": "Файлы одинаковые",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1136,
+        1776
+      ],
+      "id": "f4419d5c-3cf2-48ed-a235-246c6593484c",
+      "name": "Send an Email",
+      "webhookId": "e5034d6b-0085-4ccc-85bc-6eec9021e38a"
+    },
+    {
+      "parameters": {
+        "html": "Файлы разные",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1136,
+        1616
+      ],
+      "id": "4e06eb77-6069-4aad-968f-6cf89638bbf0",
+      "name": "Send an Email1",
+      "webhookId": "e5034d6b-0085-4ccc-85bc-6eec9021e38a"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Start Comparison": {
+      "main": [
+        [
+          {
+            "node": "Load CSV File",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Load JSON File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load CSV File": {
+      "main": [
+        [
+          {
+            "node": "Parse CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load JSON File": {
+      "main": [
+        [
+          {
+            "node": "Parse JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse CSV": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse JSON": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compare Data": {
+      "main": [
+        [
+          {
+            "node": "Send an Email1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send an Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send an Email1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send an Email1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Compare Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Compare Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "availableInMCP": false
+  },
+  "versionId": "03c16e06-71af-4a44-872e-cdbc1333545f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ba453a2d00e9613e9330b1d3634e46205d27c07544e2e34dcb6a307ec58f03aa"
+  },
+  "id": "qCKoOsiBkNtqPrxt",
+  "tags": []
+}
